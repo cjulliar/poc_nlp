@@ -1,0 +1,31 @@
+apiVersion: '2019-12-01'
+location: francecentral
+name: qsgc_gradio
+properties:
+  containers:
+  - name: app
+    properties:
+      image: cyril4000/qsgc_gradio
+      resources:
+        requests:
+          cpu: 1
+          memoryInGb: 4.5
+      ports:
+        - port: 7860
+      environmentVariables:
+        - name: AZURE_OPENAI_API_KEY
+          secureValue: f016ec508d2a4da4a81e53446dacfe1e
+        - name: AZURE_OPENAI_ENDPOINT
+          secureValue: https://qsgc-nlp.openai.azure.com/     
+        - name: DEPLOYMENT_NAME_LLM
+          secureValue: QSGC-gpt35       
+        - name: DEPLOYMENT_NAME_EMBEDDING
+          secureValue: QSGC-embedding-3-large       
+  osType: Linux
+  ipAddress:
+    type: Public
+    ports:
+    - protocol: tcp
+      port: 7860
+tags: null
+type: Microsoft.ContainerInstance/containerGroups
