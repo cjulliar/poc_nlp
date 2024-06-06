@@ -5,9 +5,9 @@ services:
     ports:
       - 7860:7860
     env_file:
-      - ./firstApp/.env
+      - ./.env
     build: 
-      context: ./firstApp/
+      context: ./app/
       dockerfile: Dockerfile
     volumes:
-      - ./app/:/firstApp/
+      - ./app/:/app/

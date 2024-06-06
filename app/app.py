@@ -30,4 +30,4 @@ with app:
     b2.click(query_rag, inputs=text_query, outputs=answer)
 
 
-app.launch()
+app.launch(server_name="0.0.0.0")
