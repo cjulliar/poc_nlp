@@ -1,0 +1,7 @@
+gradio<5
+langchain<2
+langchainhub<2
+langchain-chroma<2
+langchain-community<2
+langchain-openai<2
+wikipedia<2
