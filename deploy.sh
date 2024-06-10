@@ -1,4 +1,4 @@
-.s#!/bin/sh
+#!/bin/sh
 docker build -t cyril4000/qsgc_gradio ./app/.
 docker push cyril4000/qsgc_gradio
 

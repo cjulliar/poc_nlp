@@ -1,8 +1,6 @@
 import os
 from dotenv import load_dotenv
-
-from langchain_openai import AzureChatOpenAI
-from langchain_openai import AzureOpenAIEmbeddings
+from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_chroma import Chroma
@@ -15,37 +13,39 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 store = {}
 
+def load_environment():
+    load_dotenv()
 
 def get_session_history(session_id: str) -> BaseChatMessageHistory:
     if session_id not in store:
         store[session_id] = ChatMessageHistory()
     return store[session_id]
 
-
-def rag_wikipedia(username, page_name, query):
-
+def initialize_llm_and_embedding():
     llm = AzureChatOpenAI(
-    azure_deployment=os.getenv("DEPLOYMENT_NAME_LLM"),
-    openai_api_version="2023-06-01-preview",
-    model_version="0301",
+        azure_deployment=os.getenv("DEPLOYMENT_NAME_LLM"),
+        openai_api_version="2023-06-01-preview",
+        model_version="0301",
     )
 
     embedding = AzureOpenAIEmbeddings(
         azure_deployment=os.getenv("DEPLOYMENT_NAME_EMBEDDING"),
         openai_api_version="2023-05-15",
     )
+    return llm, embedding
 
+def load_and_split_documents(page_name, query):
     docs = WikipediaLoader(query=page_name, load_max_docs=1, doc_content_chars_max=10000).load()
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000, chunk_overlap=200, add_start_index=True
     )
     doc_splits = text_splitter.split_documents(docs)
-    vectorstore = Chroma.from_documents(
-        documents=doc_splits,
-        embedding=embedding
-    )
-    retriever = vectorstore.as_retriever()
+    return doc_splits
 
+def create_vectorstore(doc_splits, embedding):
+    return Chroma.from_documents(doc_splits, embedding)
+
+def create_prompts_and_chains(llm, retriever):
     contextualize_q_system_prompt = (
         "Given a chat history and the latest user question "
         "which might reference context in the chat history, "
@@ -86,7 +86,6 @@ def rag_wikipedia(username, page_name, query):
 
     question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
     rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
-
     conversational_rag_chain = RunnableWithMessageHistory(
         rag_chain,
         get_session_history,
@@ -94,10 +93,21 @@ def rag_wikipedia(username, page_name, query):
         history_messages_key="chat_history",
         output_messages_key="answer",
     )
+    return conversational_rag_chain
 
+def execute_rag_chain(conversational_rag_chain, username, query):
     response = conversational_rag_chain.invoke(
         {"input": query},
         config={"configurable": {"session_id": username}}
     )
-
     return response["answer"]
+
+def rag_wikipedia(username, page_name, query):
+    load_environment()
+    llm, embedding = initialize_llm_and_embedding()
+    doc_splits = load_and_split_documents(page_name, query)
+    vectorstore = create_vectorstore(doc_splits, embedding)
+    retriever = vectorstore.as_retriever()
+    conversational_rag_chain = create_prompts_and_chains(llm, retriever)
+    answer = execute_rag_chain(conversational_rag_chain, username, query)
+    return answer
