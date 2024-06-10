@@ -1,23 +1,26 @@
 import gradio as gr
 from dotenv import load_dotenv
 
-from utils import initialize_llm_and_embedding, preprocess_wikipedia, answer_wikipedia
+from utils import initialize_llm_and_embedding, preprocess_wikipedia, get_answer_llm
 
 retriever_store = {}
+PREPROC = {
+    "wiki": preprocess_wikipedia
+}
 
 def define_user(user):
     global username
     username = user
 
-def define_page(page):
-    global page_name
-    page_name = page
-    retriever = preprocess_wikipedia(page_name, embedding)
-    retriever_store[page_name] = retriever
+def define_source(source_text, func):
+    global source
+    source = source_text
+    retriever = PREPROC[func](source, embedding)
+    retriever_store[source] = retriever
 
-def query_rag(query, history):
-    retriever = retriever_store[page_name]
-    return answer_wikipedia(username, retriever, query, llm) 
+def query_llm(query, history):
+    retriever = retriever_store[source]
+    return get_answer_llm(username, retriever, query, llm) 
 
 app = gr.Blocks()
 
@@ -42,9 +45,10 @@ with app:
     # RAG wikipedia
     with gr.Tab("RAG Wikipedia"):
         text_page_name = gr.Textbox(label="Nom de la page Wikipedia")
+        func = gr.Textbox(value="wiki", visible=False)
         b2 = gr.Button("Choisir cette page pour les recherches")
-        chat = gr.ChatInterface(query_rag)
-        b2.click(define_page, inputs=text_page_name, outputs=None)
+        b2.click(define_source, inputs=[text_page_name, func], outputs=None)
+        chat = gr.ChatInterface(query_llm)
 
     # RAG autre
     with gr.Tab("RAG sur un autre sujet"):

@@ -97,7 +97,7 @@ def execute_rag_chain(conversational_rag_chain, username, query):
     )
     return response["answer"]
 
-def answer_wikipedia(username, retriever, query, llm):
+def get_answer_llm(username, retriever, query, llm):
     conversational_rag_chain = create_prompts_and_chains(llm, retriever)
     answer = execute_rag_chain(conversational_rag_chain, username, query)
     return answer
