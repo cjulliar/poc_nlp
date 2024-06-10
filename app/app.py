@@ -9,7 +9,10 @@ def define_page(user, page):
     username = user
     page_name = page
 
-def query_rag(query):
+def change_page():
+    pass
+
+def query_rag(query, history):
     return rag_wikipedia(username, page_name, query) 
 
 app = gr.Blocks()
@@ -18,16 +21,20 @@ with app:
 
     load_dotenv()
 
-    text_username = gr.Textbox()
-    text_page_name = gr.Textbox()
-    b1 = gr.Button("Choisir cette page pour les recherches")
+    gr.Markdown("POC sur le concept du RAG.")
 
-    text_query = gr.Textbox()
-    answer = gr.Textbox()
-    b2 = gr.Button("Soumettre votre question")
+    with gr.Tab("RAG Wikipedia"):
 
-    b1.click(define_page, inputs=[text_username, text_page_name], outputs=None)
-    b2.click(query_rag, inputs=text_query, outputs=answer)
+        text_username = gr.Textbox()
+        text_page_name = gr.Textbox()
+        b1 = gr.Button("Choisir cette page pour les recherches")
+
+        chat = gr.ChatInterface(query_rag)
+
+        b1.click(define_page, inputs=[text_username, text_page_name], outputs=None)
+
+    with gr.Tab("RAG sur un autre sujet"):
+        pass
 
 
 app.launch(server_name="0.0.0.0")
