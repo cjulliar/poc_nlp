@@ -1,5 +1,4 @@
 import os
-from dotenv import load_dotenv
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
@@ -12,9 +11,6 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 store = {}
-
-def load_environment():
-    load_dotenv()
 
 def get_session_history(session_id: str) -> BaseChatMessageHistory:
     if session_id not in store:
@@ -34,16 +30,15 @@ def initialize_llm_and_embedding():
     )
     return llm, embedding
 
-def load_and_split_documents(page_name, query):
+def preprocess_wikipedia(page_name, embedding):
     docs = WikipediaLoader(query=page_name, load_max_docs=1, doc_content_chars_max=10000).load()
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000, chunk_overlap=200, add_start_index=True
     )
     doc_splits = text_splitter.split_documents(docs)
-    return doc_splits
-
-def create_vectorstore(doc_splits, embedding):
-    return Chroma.from_documents(doc_splits, embedding)
+    vectorstore = Chroma.from_documents(doc_splits, embedding)
+    retriever = vectorstore.as_retriever()
+    return retriever
 
 def create_prompts_and_chains(llm, retriever):
     contextualize_q_system_prompt = (
@@ -102,12 +97,7 @@ def execute_rag_chain(conversational_rag_chain, username, query):
     )
     return response["answer"]
 
-def rag_wikipedia(username, page_name, query):
-    load_environment()
-    llm, embedding = initialize_llm_and_embedding()
-    doc_splits = load_and_split_documents(page_name, query)
-    vectorstore = create_vectorstore(doc_splits, embedding)
-    retriever = vectorstore.as_retriever()
+def answer_wikipedia(username, retriever, query, llm):
     conversational_rag_chain = create_prompts_and_chains(llm, retriever)
     answer = execute_rag_chain(conversational_rag_chain, username, query)
     return answer
