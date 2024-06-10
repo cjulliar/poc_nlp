@@ -4,13 +4,15 @@ from dotenv import load_dotenv
 from utils import (initialize_llm_and_embedding, 
                    preprocess_wikipedia, 
                    get_answer_llm,
-                   preprocess_youtube)
+                   preprocess_youtube,
+                   preprocess_pdf)
 
 
 retriever_store = {}
 PREPROC = {
     "wiki": preprocess_wikipedia,
     "youtube": preprocess_youtube,
+    "pdf": preprocess_pdf
 }
 
 def define_user(user):
@@ -61,6 +63,14 @@ with app:
         func = gr.Textbox(value="youtube", visible=False)
         b3 = gr.Button("Choisir cette URL pour les recherches")
         b3.click(define_source, inputs=[url, func], outputs=None)
+        chat = gr.ChatInterface(query_llm)
+
+    # RAG PDF
+    with gr.Tab("RAG PDF"):
+        pdf_path = gr.File(label="Choisir votre PDF", file_types=[".pdf"])
+        func = gr.Textbox(value="pdf", visible=False)
+        b2 = gr.Button("Analyser le PDF")
+        b2.click(define_source, inputs=[pdf_path, func], outputs=None)
         chat = gr.ChatInterface(query_llm)
 
 

@@ -1,5 +1,6 @@
 import os
 import re
+import fitz
 
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
@@ -19,6 +20,14 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
     if session_id not in store:
         store[session_id] = ChatMessageHistory()
     return store[session_id]
+
+def extract_text_from_pdf(pdf_path):
+    doc = fitz.open(pdf_path)
+    text = ""
+    for page_num in range(len(doc)):
+        page = doc.load_page(page_num)
+        text += page.get_text()
+    return text
 
 def initialize_llm_and_embedding():
     llm = AzureChatOpenAI(
@@ -65,6 +74,18 @@ def preprocess_youtube(url, embedding):
     doc_splits = text_splitter.split_documents(text_documents)
 
     # Create vectorstore and retriever
+    vectorstore = Chroma.from_documents(doc_splits, embedding)
+    retriever = vectorstore.as_retriever()
+    return retriever
+
+def preprocess_pdf(pdf_path, embedding):
+    pdf_text = extract_text_from_pdf(pdf_path)
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000, chunk_overlap=200, add_start_index=True
+    )
+    texts = text_splitter.split_text(pdf_text)
+    docs = [Document(page_content=t) for t in texts]
+    doc_splits = text_splitter.split_documents(docs)
     vectorstore = Chroma.from_documents(doc_splits, embedding)
     retriever = vectorstore.as_retriever()
     return retriever
