@@ -1,10 +1,13 @@
 import os
+import re
+
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.schema import Document
 from langchain_chroma import Chroma
 from langchain_community.chat_message_histories import ChatMessageHistory
-from langchain_community.document_loaders import WikipediaLoader
+from langchain_community.document_loaders import WikipediaLoader, YoutubeLoader
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
@@ -36,6 +39,32 @@ def preprocess_wikipedia(page_name, embedding):
         chunk_size=1000, chunk_overlap=200, add_start_index=True
     )
     doc_splits = text_splitter.split_documents(docs)
+    vectorstore = Chroma.from_documents(doc_splits, embedding)
+    retriever = vectorstore.as_retriever()
+    return retriever
+
+def preprocess_youtube(url, embedding):
+        # Extract video id
+    id_regex = re.compile("v=(.+)$")
+    matches = re.search(id_regex, url)
+
+    if matches:
+        id_ = matches.groups()[0]
+    else:
+        raise ValueError("No id found in the given URL")
+
+    # Load transcript
+    transcript_loader = YoutubeLoader(video_id=id_)
+    transcription = transcript_loader.load()[0].page_content
+
+    # Split transcript
+    text_documents = [Document(page_content=transcription)]
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size = 1_000, chunk_overlap=200
+    )
+    doc_splits = text_splitter.split_documents(text_documents)
+
+    # Create vectorstore and retriever
     vectorstore = Chroma.from_documents(doc_splits, embedding)
     retriever = vectorstore.as_retriever()
     return retriever

@@ -1,11 +1,16 @@
 import gradio as gr
 from dotenv import load_dotenv
 
-from utils import initialize_llm_and_embedding, preprocess_wikipedia, get_answer_llm
+from utils import (initialize_llm_and_embedding, 
+                   preprocess_wikipedia, 
+                   get_answer_llm,
+                   preprocess_youtube)
+
 
 retriever_store = {}
 PREPROC = {
-    "wiki": preprocess_wikipedia
+    "wiki": preprocess_wikipedia,
+    "youtube": preprocess_youtube,
 }
 
 def define_user(user):
@@ -50,9 +55,13 @@ with app:
         b2.click(define_source, inputs=[text_page_name, func], outputs=None)
         chat = gr.ChatInterface(query_llm)
 
-    # RAG autre
-    with gr.Tab("RAG sur un autre sujet"):
-        pass
+    # RAG YouTube
+    with gr.Tab("RAG YouTube"):
+        url = gr.Textbox(label="URL de la vidéo YouTube")
+        func = gr.Textbox(value="youtube", visible=False)
+        b3 = gr.Button("Choisir cette URL pour les recherches")
+        b3.click(define_source, inputs=[url, func], outputs=None)
+        chat = gr.ChatInterface(query_llm)
 
 
 app.launch(server_name="0.0.0.0")
