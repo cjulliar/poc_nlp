@@ -2,5 +2,8 @@ langchain
 langchain-openai
 langchain-chroma
 langchain-community
+langchain-core
 ipykernel
 python-dotenv
+fitz
+pymupdf
