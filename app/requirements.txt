@@ -4,4 +4,7 @@ langchainhub<2
 langchain-chroma<2
 langchain-community<2
 langchain-openai<2
+langchain-core<2
 wikipedia<2
+fitz
+pymupdf
