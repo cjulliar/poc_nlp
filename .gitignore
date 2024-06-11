@@ -163,4 +163,4 @@ cython_debug/
 
 deploy.yaml
 .env
-
+.DS_Store
