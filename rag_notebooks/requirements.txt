@@ -4,3 +4,6 @@ langchain-chroma<2
 langchain-community<2
 langchain-openai<2
 wikipedia<2
+python-dotenv
+fitz
+pymupdf
