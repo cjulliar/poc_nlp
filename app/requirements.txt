@@ -8,3 +8,4 @@ langchain-core<2
 wikipedia<2
 fitz
 pymupdf
+youtube-transcript-api<2
