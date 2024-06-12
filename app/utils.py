@@ -1,6 +1,6 @@
 import os
 import re
-import fitz
+import pymupdf
 
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
@@ -22,7 +22,7 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
     return store[session_id]
 
 def extract_text_from_pdf(pdf_path):
-    doc = fitz.open(pdf_path)
+    doc = pymupdf.open(pdf_path)
     text = ""
     for page_num in range(len(doc)):
         page = doc.load_page(page_num)

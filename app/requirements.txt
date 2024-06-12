@@ -6,7 +6,5 @@ langchain-community<2
 langchain-openai<2
 langchain-core<2
 wikipedia<2
-fitz
 pymupdf
 youtube-transcript-api<2
-frontend
