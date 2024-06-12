@@ -7,3 +7,4 @@ langchain-openai<2
 langchain-core<2
 wikipedia<2
 pymupdf
+youtube-transcript-api<2
