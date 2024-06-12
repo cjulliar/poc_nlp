@@ -81,14 +81,13 @@ class TestUtils(unittest.TestCase):
         mock_llm = MagicMock()
         mock_retriever = MagicMock()
 
+        # Créer des mocks distincts pour les retours de ChatPromptTemplate.from_messages()
         mock_contextualize_q_prompt = MagicMock()
-        mock_chat_prompt_template.return_value = mock_contextualize_q_prompt
+        mock_qa_prompt = MagicMock()
+        mock_chat_prompt_template.side_effect = [mock_contextualize_q_prompt, mock_qa_prompt]
 
         mock_history_aware_retriever = MagicMock()
         mock_create_history_aware_retriever.return_value = mock_history_aware_retriever
-
-        mock_qa_prompt = MagicMock()
-        mock_chat_prompt_template.return_value = mock_qa_prompt
 
         mock_question_answer_chain = MagicMock()
         mock_create_stuff_documents_chain.return_value = mock_question_answer_chain
@@ -104,6 +103,8 @@ class TestUtils(unittest.TestCase):
 
         self.assertIsInstance(conversational_rag_chain, utils.RunnableWithMessageHistory)
 
+    # Test la connexion a create_prompts_and_chains et execute_rag_chain
+    # Test que get_answer_llm retourne la réponse correcte
     @patch('app.utils.create_prompts_and_chains')
     @patch('app.utils.execute_rag_chain')
     def test_get_answer_llm(self, mock_execute_rag_chain, mock_create_prompts_and_chains):
