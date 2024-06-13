@@ -1,40 +1,56 @@
 import gradio as gr
 from dotenv import load_dotenv
 
-from utils import (initialize_llm_and_embedding, 
+from utils import (initialize_llm_and_embedding_and_pinecone, 
                    preprocess_wikipedia, 
                    get_answer_llm,
                    preprocess_youtube,
-                   preprocess_pdf)
+                   preprocess_pdf,
+                   preprocess_corpus)
 
 
 retriever_store = {}
 PREPROC = {
     "wiki": preprocess_wikipedia,
     "youtube": preprocess_youtube,
-    "pdf": preprocess_pdf
+    "pdf": preprocess_pdf,
+    "corpus": preprocess_corpus,
 }
 
 def define_user(user):
     global username
     username = user
 
-def define_source(source_text, func):
+def define_source(files, func):
     global source
-    source = source_text
-    retriever = PREPROC[func](source, embedding)
-    retriever_store[source] = retriever
+    if isinstance(files, list):  # Si plusieurs fichiers sont téléchargés
+        for file in files:
+            source = file.name
+            file_type = source.split(".")[-1]
+            if file_type in PREPROC:
+                retriever = PREPROC[file_type](file, embedding)
+                retriever_store[source] = retriever
+    else:  # Si un seul fichier est téléchargé
+        source = files.name
+        file_type = source.split(".")[-1]
+        if file_type in PREPROC:
+            retriever = PREPROC[file_type](files, embedding)
+            retriever_store[source] = retriever
 
 def query_llm(query, history):
-    retriever = retriever_store[source]
-    return get_answer_llm(username, retriever, query, llm) 
+    global source
+    if source in retriever_store:
+        retriever = retriever_store[source]
+        return get_answer_llm(username, retriever, query, llm)
+    else:
+        return "Erreur: Aucun document sélectionné."
 
 app = gr.Blocks()
 
 with app:
 
     load_dotenv()
-    llm, embedding = initialize_llm_and_embedding()
+    llm, embedding, pinecone_client = initialize_llm_and_embedding_and_pinecone()
 
     # Description et session utilisateur
     gr.Markdown("# POC sur le concept du RAG")
@@ -71,6 +87,14 @@ with app:
         func = gr.Textbox(value="pdf", visible=False)
         b2 = gr.Button("Analyser le PDF")
         b2.click(define_source, inputs=[pdf_path, func], outputs=None)
+        chat = gr.ChatInterface(query_llm)
+
+    # RAG Corpus
+    with gr.Tab("RAG Corpus"):
+        files = gr.Files(label="Choisir vos fichiers", file_count="multiple", file_types=[".pdf", ".docx"])
+        func = gr.Textbox(value="corpus", visible=False)
+        b2 = gr.Button("Analyser les fichiers")
+        b2.click(define_source, inputs=[files, func], outputs=None)
         chat = gr.ChatInterface(query_llm)
 
 
