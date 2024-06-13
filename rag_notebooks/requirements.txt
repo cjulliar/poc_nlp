@@ -3,7 +3,8 @@ langchainhub<2
 langchain-chroma<2
 langchain-community<2
 langchain-openai<2
+langchain-pinecone<2
 wikipedia<2
 python-dotenv
-fitz
+python-docx
 pymupdf
