@@ -123,5 +123,100 @@ class TestUtils(unittest.TestCase):
         mock_pinecone.from_documents.assert_called_once()
         mock_pinecone_instance.as_retriever.assert_called_once()
 
+    # Tests pour extract_text_from_pdf et extract_text_from_docx
+    @patch('app.utils.pymupdf.open')
+    def test_extract_text_from_pdf_success(self, mock_open):
+        mock_pdf = MagicMock()
+        mock_page = MagicMock()
+        mock_page.get_text.return_value = "Sample text"
+        mock_pdf.load_page.return_value = mock_page
+        mock_pdf.__len__.return_value = 1
+        mock_open.return_value = mock_pdf
+
+        text = utils.extract_text_from_pdf("dummy.pdf")
+        self.assertEqual(text, "Sample text")
+
+    @patch('app.utils.pymupdf.open')
+    def test_extract_text_from_pdf_error(self, mock_open):
+        mock_open.side_effect = Exception("Error reading PDF")
+        text = utils.extract_text_from_pdf("dummy.pdf")
+        self.assertEqual(text, "")
+
+    @patch('app.utils.Document')
+    def test_extract_text_from_docx_success(self, mock_document):
+        mock_doc_instance = mock_document.return_value
+        mock_doc_instance.paragraphs = [MagicMock(text="Paragraph 1"), MagicMock(text="Paragraph 2")]
+
+        text = utils.extract_text_from_docx("dummy.docx")
+        self.assertEqual(text, "Paragraph 1\nParagraph 2")
+
+    @patch('app.utils.Document')
+    def test_extract_text_from_docx_error(self, mock_document):
+        mock_document.side_effect = Exception("Error reading DOCX")
+        text = utils.extract_text_from_docx("dummy.docx")
+        self.assertEqual(text, "")
+
+    # Test pour load_documents_from_directory
+    @patch('app.utils.os.listdir')
+    @patch('app.utils.extract_text_from_pdf')
+    @patch('app.utils.extract_text_from_docx')
+    def test_load_documents_from_directory(self, mock_extract_docx, mock_extract_pdf, mock_listdir):
+        mock_listdir.return_value = ["file1.pdf", "file2.docx", "file3.txt"]
+        mock_extract_pdf.return_value = "PDF text"
+        mock_extract_docx.return_value = "DOCX text"
+
+        documents = utils.load_documents_from_directory("dummy_directory")
+        self.assertEqual(documents, ["PDF text", "DOCX text"])
+
+
+@patch('app.utils.PREPROC')
+@patch('app.utils.embedding')
+def test_define_source_single_file(self, mock_embedding, mock_preproc):
+    mock_func = MagicMock()
+    mock_preproc.__getitem__.return_value = mock_func
+    file = MagicMock(name="file.pdf")
+    
+    utils.define_source(file, "pdf")
+
+    mock_func.assert_called_once_with(file, mock_embedding)
+    self.assertIn("file.pdf", utils.retriever_store)
+
+    # Test pour define_source
+    @patch('app.utils.PREPROC')
+    @patch('app.utils.embedding')
+    def test_define_source_multiple_files(self, mock_embedding, mock_preproc):
+        mock_func = MagicMock()
+        mock_preproc.__getitem__.return_value = mock_func
+        files = [MagicMock(name="file1.pdf"), MagicMock(name="file2.docx")]
+        
+        utils.define_source(files, "corpus")
+
+        mock_func.assert_any_call(files[0], mock_embedding)
+        mock_func.assert_any_call(files[1], mock_embedding)
+        self.assertIn("file1.pdf", utils.retriever_store)
+        self.assertIn("file2.docx", utils.retriever_store)
+
+
+    # Test pour query_llm
+    @patch('app.utils.get_answer_llm')
+    def test_query_llm_with_selected_source(self, mock_get_answer):
+        mock_get_answer.return_value = "Mocked Answer"
+        utils.retriever_store = {"test.pdf": MagicMock()}
+        utils.username = "test_user"
+        utils.source = "test.pdf"
+
+        response = utils.query_llm("test query", [])
+        self.assertEqual(response, "Mocked Answer")
+
+    @patch('app.utils.get_answer_llm')
+    def test_query_llm_without_selected_source(self, mock_get_answer):
+        utils.retriever_store = {}
+        utils.username = "test_user"
+        utils.source = "nonexistent.pdf"
+
+        response = utils.query_llm("test query", [])
+        self.assertEqual(response, "Erreur: Aucun document sélectionné.")
+
+
 if __name__ == '__main__':
     unittest.main()
