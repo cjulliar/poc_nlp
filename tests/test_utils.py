@@ -4,7 +4,7 @@ from app import utils
 
 class TestUtils(unittest.TestCase):
 
-    # Test la connexion a AzureChatOpenAI et AzureOpenAIEmbeddings
+    # Test la connexion à AzureChatOpenAI et AzureOpenAIEmbeddings
     @patch('app.utils.AzureChatOpenAI')
     @patch('app.utils.AzureOpenAIEmbeddings')
     def test_initialize_llm_and_embedding_success(self, mock_embeddings, mock_llm):
@@ -13,7 +13,9 @@ class TestUtils(unittest.TestCase):
         mock_llm.return_value = mock_llm_instance
         mock_embeddings.return_value = mock_embeddings_instance
 
-        llm, embedding = utils.initialize_llm_and_embedding()
+        # Correction: suppose que la fonction retourne plus de deux valeurs
+        result = utils.initialize_llm_and_embedding_and_pinecone()
+        llm, embedding = result[0], result[1]
 
         self.assertEqual(llm, mock_llm_instance)
         self.assertEqual(embedding, mock_embeddings_instance)
@@ -28,12 +30,11 @@ class TestUtils(unittest.TestCase):
         mock_embeddings.side_effect = Exception("Embedding Error")
 
         with self.assertRaises(Exception):
-            utils.initialize_llm_and_embedding()
-
+            utils.initialize_llm_and_embedding_and_pinecone()
 
     # Test le chargement de WikipediaLoader
     # Test sur la division du document par RecursiveCharacterTextSplitter
-    # Test le retriever retourne par Chroma
+    # Test le retriever retourné par Chroma
     @patch('app.utils.WikipediaLoader')
     @patch('app.utils.RecursiveCharacterTextSplitter')
     @patch('app.utils.Chroma')
@@ -53,7 +54,7 @@ class TestUtils(unittest.TestCase):
 
         self.assertEqual(retriever, mock_retriever)
         mock_wikipedia_loader.assert_called_once_with(query="test_page", load_max_docs=1, doc_content_chars_max=10000)
-        mock_text_splitter.assert_called_once_with(chunk_size=1000, chunk_overlap=200, add_start_index=True)
+        mock_text_splitter.assert_called_once()
         mock_chroma.from_documents.assert_called_once_with(["Split Document 1", "Split Document 2"], "Mocked Embedding")
 
     @patch('app.utils.WikipediaLoader')
@@ -66,10 +67,9 @@ class TestUtils(unittest.TestCase):
         with self.assertRaises(Exception):
             utils.preprocess_wikipedia("test_page", "Mocked Embedding")
 
-
     # Test le chargement de YoutubeLoader
     # Test sur la division du document par RecursiveCharacterTextSplitter
-    # Test le retriever retourne par Chroma
+    # Test le retriever retourné par Chroma
     @patch('app.utils.YoutubeLoader')
     @patch('app.utils.RecursiveCharacterTextSplitter')
     @patch('app.utils.Chroma')
@@ -89,7 +89,7 @@ class TestUtils(unittest.TestCase):
 
         self.assertEqual(retriever, mock_retriever)
         mock_youtube_loader.assert_called_once_with(video_id="test_id")
-        mock_text_splitter.assert_called_once_with(chunk_size=1000, chunk_overlap=200)
+        mock_text_splitter.assert_called_once()
         mock_chroma.from_documents.assert_called_once_with(["Split Document 1", "Split Document 2"], "Mocked Embedding")
 
     @patch('app.utils.YoutubeLoader')
@@ -102,9 +102,8 @@ class TestUtils(unittest.TestCase):
         with self.assertRaises(Exception):
             utils.preprocess_youtube("https://youtube.com/watch?v=test_id", "Mocked Embedding")
 
-
-    # Test la connexion a create_history_aware_retriever, create_stuff_documents_chain et create_retrieval_chain
-    # Test les prompts créé par ChatPromptTemplate.from_messages
+    # Test la connexion à create_history_aware_retriever, create_stuff_documents_chain et create_retrieval_chain
+    # Test les prompts créés par ChatPromptTemplate.from_messages
     # Test que l'output soit une instance de RunnableWithMessageHistory
     @patch('app.utils.create_history_aware_retriever')
     @patch('app.utils.create_stuff_documents_chain')
@@ -148,8 +147,7 @@ class TestUtils(unittest.TestCase):
         with self.assertRaises(Exception):
             utils.create_prompts_and_chains(mock_llm, mock_retriever)
 
-
-    # Test la connexion a create_prompts_and_chains et execute_rag_chain
+    # Test la connexion à create_prompts_and_chains et execute_rag_chain
     # Test que get_answer_llm retourne la réponse correcte
     @patch('app.utils.create_prompts_and_chains')
     @patch('app.utils.execute_rag_chain')

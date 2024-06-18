@@ -10,3 +10,4 @@ wikipedia<2
 pymupdf
 youtube-transcript-api<2
 python-docx
+pinecone-client<5

@@ -1,0 +1,9 @@
+langchain<2
+langchain-community<2
+langchain-openai<2
+langgraph<2
+langsmith<2
+openai<2
+python-dotenv<2
+rich<14
+tavily-python<2
