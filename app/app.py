@@ -21,7 +21,13 @@ def define_user(user):
     global username
     username = user
 
-def define_source(files, func):
+def define_source(source_text, func):
+    global source
+    source = source_text
+    retriever = PREPROC[func](source, embedding)
+    retriever_store[source] = retriever
+
+def define_source_files(files, func):
     global source
     if isinstance(files, list):  # Si plusieurs fichiers sont téléchargés
         for file in files:
@@ -86,7 +92,7 @@ with app:
         pdf_path = gr.File(label="Choisir votre PDF", file_types=[".pdf"])
         func = gr.Textbox(value="pdf", visible=False)
         b2 = gr.Button("Analyser le PDF")
-        b2.click(define_source, inputs=[pdf_path, func], outputs=None)
+        b2.click(define_source_files, inputs=[pdf_path, func], outputs=None)
         chat = gr.ChatInterface(query_llm)
 
     # RAG Corpus
@@ -94,7 +100,7 @@ with app:
         files = gr.Files(label="Choisir vos fichiers", file_count="multiple", file_types=[".pdf", ".docx"])
         func = gr.Textbox(value="corpus", visible=False)
         b2 = gr.Button("Analyser les fichiers")
-        b2.click(define_source, inputs=[files, func], outputs=None)
+        b2.click(define_source_files, inputs=[files, func], outputs=None)
         chat = gr.ChatInterface(query_llm)
 
 
