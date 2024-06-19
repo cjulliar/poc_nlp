@@ -23,14 +23,25 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
         store[session_id] = ChatMessageHistory()
     return store[session_id]
 
+# def extract_text_from_pdf(pdf_path):
+#     doc = pymupdf.open(pdf_path)
+#     text = ""
+#     for page_num in range(len(doc)):
+#         page = doc.load_page(page_num)
+#         text += page.get_text()
+#     return text
 def extract_text_from_pdf(pdf_path):
-    doc = pymupdf.open(pdf_path)
-    text = ""
-    for page_num in range(len(doc)):
-        page = doc.load_page(page_num)
-        text += page.get_text()
-    return text
-
+    try:
+        doc = pymupdf.open(pdf_path)
+        text = ""
+        for page_num in range(len(doc)):
+            page = doc.load_page(page_num)
+            text += page.get_text()
+        return text
+    except Exception as e:
+        print(f"Error extracting text from PDF file {pdf_path}: {e}")
+        return ""
+    
 def extract_text_from_docx(doc_path):
     try:
         doc = Document(doc_path)

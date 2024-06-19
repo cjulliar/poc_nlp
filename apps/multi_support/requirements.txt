@@ -5,9 +5,7 @@ langchain-chroma<2
 langchain-community<2
 langchain-openai<2
 langchain-core<2
-langchain-pinecone<2
 wikipedia<2
 pymupdf
 youtube-transcript-api<2
 python-docx
-pinecone-client<5
