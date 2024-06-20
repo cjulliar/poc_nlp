@@ -1,13 +1,23 @@
 version: "3.8"
 services:
 
-  web:
+  single:
     ports:
       - 7860:7860
     env_file:
       - ./.env
     build: 
-      context: ./app/
+      context: ./apps/single_support
       dockerfile: Dockerfile
     volumes:
-      - ./app/:/app/
+      - ./apps/single_support:/app/single_support
+  multi:
+    ports:
+      - 8000:8000
+    env_file:
+      - ./.env
+    build: 
+      context: ./apps/multi_support
+      dockerfile: Dockerfile
+    volumes:
+      - ./apps/multi_support:/app/multi_support
