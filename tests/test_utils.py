@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from app import utils
+from apps.single_support import utils
 
 class TestUtils(unittest.TestCase):
 
